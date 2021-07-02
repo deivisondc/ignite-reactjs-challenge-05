@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { GetStaticProps } from 'next';
+import Link from 'next/link';
 import Prismic from '@prismicio/client';
 import { format } from 'date-fns';
+import { FiCalendar, FiUser } from 'react-icons/fi';
 
 import { getPrismicClient } from '../services/prismic';
 
@@ -32,7 +34,6 @@ export default function Home({ postsPagination }: HomeProps) {
   const [nextPage, setNextPage] = useState(postsPagination.next_page);
 
   function handleLoadMorePosts(): void {
-    console.log('nextPage', nextPage);
     if (nextPage) {
       fetch(nextPage)
         .then(response => response.json())
@@ -67,17 +68,19 @@ export default function Home({ postsPagination }: HomeProps) {
 
       <main>
         {posts.map(post => (
-          <div className={styles.post} key={post.uid}>
-            <strong>{post.data.title}</strong>
-            <p>{post.data.subtitle}</p>
+          <Link href={`/posts/${post.uid}`}>
+            <div className={styles.post} key={post.uid}>
+              <strong>{post.data.title}</strong>
+              <p>{post.data.subtitle}</p>
 
-            <footer>
-              <img src="/images/calendar.svg" alt="Logo" />
-              <span>{post.first_publication_date}</span>
-              <img src="/images/user.svg" alt="Logo" />
-              <span>{post.data.author}</span>
-            </footer>
-          </div>
+              <footer>
+                <FiCalendar color="#BBBBBB" size={15} />
+                <span>{post.first_publication_date}</span>
+                <FiUser color="#BBBBBB" size={15} />
+                <span>{post.data.author}</span>
+              </footer>
+            </div>
+          </Link>
         ))}
 
         {nextPage && (
@@ -99,7 +102,7 @@ export const getStaticProps: GetStaticProps = async () => {
 
   const posts = postsResponse.results.map(post => {
     return {
-      uid: post.id,
+      uid: post.uid,
       first_publication_date: format(
         new Date(post.first_publication_date),
         'd MMM yyyy'
