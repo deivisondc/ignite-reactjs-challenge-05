@@ -7,6 +7,8 @@ import { FiCalendar, FiUser } from 'react-icons/fi';
 
 import { getPrismicClient } from '../services/prismic';
 
+import Header from '../components/Header';
+
 import commonStyles from '../styles/common.module.scss';
 import styles from './home.module.scss';
 
@@ -61,35 +63,34 @@ export default function Home({ postsPagination }: HomeProps) {
   }
 
   return (
-    <div className={styles.container}>
-      <header>
-        <img src="/images/logo.svg" alt="Logo" />
-      </header>
+    <>
+      <Header />
+      <div className={styles.container}>
+        <main>
+          {posts.map(post => (
+            <Link href={`/posts/${post.uid}`}>
+              <div className={styles.post} key={post.uid}>
+                <strong>{post.data.title}</strong>
+                <p>{post.data.subtitle}</p>
 
-      <main>
-        {posts.map(post => (
-          <Link href={`/posts/${post.uid}`}>
-            <div className={styles.post} key={post.uid}>
-              <strong>{post.data.title}</strong>
-              <p>{post.data.subtitle}</p>
+                <footer>
+                  <FiCalendar color="#BBBBBB" size={15} />
+                  <span>{post.first_publication_date}</span>
+                  <FiUser color="#BBBBBB" size={15} />
+                  <span>{post.data.author}</span>
+                </footer>
+              </div>
+            </Link>
+          ))}
 
-              <footer>
-                <FiCalendar color="#BBBBBB" size={15} />
-                <span>{post.first_publication_date}</span>
-                <FiUser color="#BBBBBB" size={15} />
-                <span>{post.data.author}</span>
-              </footer>
-            </div>
-          </Link>
-        ))}
-
-        {nextPage && (
-          <button type="button" onClick={handleLoadMorePosts}>
-            Carregar mais posts
-          </button>
-        )}
-      </main>
-    </div>
+          {nextPage && (
+            <button type="button" onClick={handleLoadMorePosts}>
+              Carregar mais posts
+            </button>
+          )}
+        </main>
+      </div>
+    </>
   );
 }
 
