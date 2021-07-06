@@ -42,7 +42,7 @@ export default function Home({ postsPagination }: HomeProps) {
         .then(data => {
           const nextPagePosts = data.results.map(post => {
             return {
-              uid: post.id,
+              uid: post.uid,
               first_publication_date: format(
                 new Date(post.first_publication_date),
                 'd MMM yyyy'
@@ -68,7 +68,7 @@ export default function Home({ postsPagination }: HomeProps) {
       <div className={styles.container}>
         <main>
           {posts.map(post => (
-            <Link href={`/posts/${post.uid}`}>
+            <Link href={`/post/${post.uid}`}>
               <div className={styles.post} key={post.uid}>
                 <strong>{post.data.title}</strong>
                 <p>{post.data.subtitle}</p>
