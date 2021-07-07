@@ -1,6 +1,9 @@
+import { useMemo } from 'react';
 import { GetStaticPaths, GetStaticProps } from 'next';
 import { RichText } from 'prismic-dom';
 import { useRouter } from 'next/router';
+import { format } from 'date-fns';
+import { FiCalendar, FiUser, FiClock } from 'react-icons/fi';
 import Prismic from '@prismicio/client';
 
 import { getPrismicClient } from '../../services/prismic';
@@ -34,6 +37,21 @@ interface PostProps {
 export default function Post({ post }: PostProps) {
   const router = useRouter();
 
+  const estimatedTimeReading = useMemo(() => {
+    if (!post) {
+      return 0;
+    }
+
+    const words = post.data.content.reduce((acc, cur) => {
+      const heading = cur.heading.split(' ').length;
+      const body = RichText.asText(cur.body).split(' ').length;
+
+      return acc + heading + body;
+    }, 0);
+
+    return Math.ceil(words / 200);
+  }, [post]);
+
   if (router.isFallback) {
     return <div>Carregando...</div>;
   }
@@ -44,13 +62,23 @@ export default function Post({ post }: PostProps) {
       <img className={styles.banner} src={post.data.banner.url} alt="banner" />
       <main className={styles.content}>
         <h1>{post.data.title}</h1>
+        <div className={styles.postInfo}>
+          <FiCalendar size={18} />
+          <span>{post.first_publication_date}</span>
+          <FiUser size={18} />
+          <span>{post.data.author}</span>
+          <FiClock size={18} />
+          <span>{estimatedTimeReading} min</span>
+        </div>
         {post.data.content.map(content => (
-          <div>
+          <div key={content.heading}>
             <h2>{content.heading}</h2>
             <div
               key={content.heading}
               className="content"
-              dangerouslySetInnerHTML={{ __html: content.body }}
+              dangerouslySetInnerHTML={{
+                __html: RichText.asHtml(content.body),
+              }}
             />
           </div>
         ))}
@@ -59,7 +87,7 @@ export default function Post({ post }: PostProps) {
   );
 }
 
-export const getStaticPaths = async () => {
+export const getStaticPaths: GetStaticPaths = async () => {
   const prismic = getPrismicClient();
   const posts = await prismic.query(
     Prismic.Predicates.at('document.type', 'posts'),
@@ -72,49 +100,21 @@ export const getStaticPaths = async () => {
   };
 };
 
-export const getStaticProps = async context => {
+export const getStaticProps: GetStaticProps = async context => {
   const { slug } = context.params;
   const prismic = getPrismicClient();
-  const response = await prismic.getByUID('posts', slug, {});
+  const response = await prismic.getByUID('posts', slug.toString(), {});
 
-  // const words = response.data.content.reduce((acc, cur) => {
-  //   const heading = cur.heading.split(' ').length;
-  //   const body = RichText.asText(cur.body).split(' ').length;
+  console.log('response.data.content', response.data);
 
-  //   return acc + heading + body;
-  // }, 0);
-
-  // const estimatedTimeReading = Math.ceil(words / 200);
-
-  console.log(response.data);
-  // console.log(response.data.content.map(a => ({ b: RichText.asHtml(a.body) })));
-
-  // TODO
   return {
     props: {
       post: {
-        first_publication_date: response.first_publication_date,
-        data: {
-          title: response.data.title,
-          banner: {
-            url: response.data.banner.url,
-          },
-          author: response.data.author,
-          content: response.data.content.map(content => {
-            //   // console.log(content.body);
-            return {
-              heading: content.heading,
-              body: RichText.asHtml(content.body),
-              //     body: content.body.map(body => {
-              //       console.log(body);
-              //       // console.log(RichText.asHtml(body.text));
-              //       return {
-              //         // text: RichText.asHtml(body.text),
-              //       };
-              //     }),
-            };
-          }),
-        },
+        first_publication_date: format(
+          new Date(response.first_publication_date),
+          'd MMM yyyy'
+        ),
+        data: response.data,
       },
     },
     revalidate: 60 * 60 * 24,

@@ -8,10 +8,42 @@
 .content {
   display: flex;
   flex-direction: column;
+  padding-bottom: 80px;
 
   margin: 0 auto;
 
   width: 100%;
   max-width: 700px;
   height: 100%;
+
+  h1 {
+    font-weight: 700;
+    font-size: 48px;
+    line-height: 58.9px;
+    margin-bottom: 25px;
+  }
+
+  h2 {
+    font-weight: 700;
+    font-size: 36px;
+    line-height: 50.4px;
+    text-align: justify;
+    margin: 36px 0;
+  }
+
+  p {
+    font-size: 18px;
+    line-height: 25.2px;
+    text-align: justify;
+  }
+}
+
+.postInfo {
+  display: flex;
+  align-items: center;
+
+  span {
+    margin-left: 10px;
+    margin-right: 28px;
+  }
 }
