@@ -64,7 +64,12 @@ export default function Post({ post }: PostProps) {
         <h1>{post.data.title}</h1>
         <div className={styles.postInfo}>
           <FiCalendar size={18} />
-          <span>{post.first_publication_date}</span>
+          <span>
+            {format(
+              new Date(post.first_publication_date),
+              'd MMM yyyy'
+            ).toLowerCase()}
+          </span>
           <FiUser size={18} />
           <span>{post.data.author}</span>
           <FiClock size={18} />
@@ -90,12 +95,11 @@ export default function Post({ post }: PostProps) {
 export const getStaticPaths: GetStaticPaths = async () => {
   const prismic = getPrismicClient();
   const posts = await prismic.query(
-    Prismic.Predicates.at('document.type', 'posts'),
-    { pageSize: 1 }
+    Prismic.Predicates.at('document.type', 'posts')
   );
 
   return {
-    paths: [{ params: { slug: posts.results[0]?.uid } }],
+    paths: posts.results.map(result => ({ params: { slug: result?.uid } })),
     fallback: true,
   };
 };
@@ -103,17 +107,13 @@ export const getStaticPaths: GetStaticPaths = async () => {
 export const getStaticProps: GetStaticProps = async context => {
   const { slug } = context.params;
   const prismic = getPrismicClient();
-  const response = await prismic.getByUID('posts', slug.toString(), {});
-
-  console.log('response.data.content', response.data);
+  const response = await prismic.getByUID('posts', String(slug), {});
 
   return {
     props: {
       post: {
-        first_publication_date: format(
-          new Date(response.first_publication_date),
-          'd MMM yyyy'
-        ),
+        first_publication_date: response.first_publication_date,
+        uid: response.uid,
         data: response.data,
       },
     },
