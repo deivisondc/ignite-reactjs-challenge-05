@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { GetStaticPaths, GetStaticProps } from 'next';
 import { RichText } from 'prismic-dom';
 import { useRouter } from 'next/router';
@@ -36,6 +36,18 @@ interface PostProps {
 
 export default function Post({ post }: PostProps) {
   const router = useRouter();
+
+  useEffect(() => {
+    const script = document.createElement('script');
+    const anchor = document.getElementById('inject-comments-for-uterances');
+    script.setAttribute('src', 'https://utteranc.es/client.js');
+    script.setAttribute('crossorigin', 'anonymous');
+    script.setAttribute('async', 'true');
+    script.setAttribute('repo', 'deivisondc/ignite-reactjs-challenge-05');
+    script.setAttribute('issue-term', 'pathname');
+    script.setAttribute('theme', 'github-light');
+    anchor.appendChild(script);
+  }, []);
 
   const estimatedTimeReading = useMemo(() => {
     if (!post) {
@@ -88,6 +100,8 @@ export default function Post({ post }: PostProps) {
           </div>
         ))}
       </main>
+
+      <div id="inject-comments-for-uterances"> </div>
     </>
   );
 }
