@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { GetStaticPaths, GetStaticProps } from 'next';
+import Link from 'next/link';
 import { RichText } from 'prismic-dom';
 import { useRouter } from 'next/router';
 import { format } from 'date-fns';
@@ -31,23 +32,36 @@ interface Post {
   };
 }
 
-interface PostProps {
-  post: Post;
+interface FooterLink {
+  slug: string;
+  title: string;
 }
 
-export default function Post({ post }: PostProps) {
+interface PostProps {
+  post: Post;
+  previousPost?: FooterLink;
+  nextPost?: FooterLink;
+}
+
+export default function Post({
+  post,
+  previousPost,
+  nextPost,
+}: PostProps): JSX.Element {
   const router = useRouter();
 
   useEffect(() => {
-    const script = document.createElement('script');
     const anchor = document.getElementById('inject-comments-for-uterances');
-    script.setAttribute('src', 'https://utteranc.es/client.js');
-    script.setAttribute('crossorigin', 'anonymous');
-    script.setAttribute('async', 'true');
-    script.setAttribute('repo', 'deivisondc/ignite-reactjs-challenge-05');
-    script.setAttribute('issue-term', 'pathname');
-    script.setAttribute('theme', 'github-light');
-    anchor.appendChild(script);
+    if (anchor) {
+      const script = document.createElement('script');
+      script.setAttribute('src', 'https://utteranc.es/client.js');
+      script.setAttribute('crossorigin', 'anonymous');
+      script.setAttribute('async', 'true');
+      script.setAttribute('repo', 'deivisondc/ignite-reactjs-challenge-05');
+      script.setAttribute('issue-term', 'pathname');
+      script.setAttribute('theme', 'github-light');
+      anchor.appendChild(script);
+    }
   }, []);
 
   const estimatedTimeReading = useMemo(() => {
@@ -111,6 +125,32 @@ export default function Post({ post }: PostProps) {
             />
           </div>
         ))}
+
+        <hr className={styles.divisor} />
+
+        <div className={styles.footer}>
+          {previousPost?.slug ? (
+            <Link href={`/post/${previousPost.slug}`}>
+              <div>
+                <p>{previousPost?.title}</p>
+                <span>Post anterior</span>
+              </div>
+            </Link>
+          ) : (
+            <div />
+          )}
+
+          {nextPost?.slug ? (
+            <Link href={`/post/${nextPost.slug}`}>
+              <div>
+                <p>{nextPost?.title}</p>
+                <span>Próximo post</span>
+              </div>
+            </Link>
+          ) : (
+            <div />
+          )}
+        </div>
       </main>
 
       <div id="inject-comments-for-uterances"> </div>
@@ -135,6 +175,33 @@ export const getStaticProps: GetStaticProps = async context => {
   const prismic = getPrismicClient();
   const response = await prismic.getByUID('posts', String(slug), {});
 
+  let previousPost;
+  let nextPost;
+  try {
+    previousPost = (
+      await prismic.query(Prismic.Predicates.at('document.type', 'posts'), {
+        orderings: '[document.first_publication_date desc]',
+        after: response.id,
+        pageSize: 1,
+      })
+    ).results[0];
+
+    nextPost = (
+      await prismic.query(Prismic.Predicates.at('document.type', 'posts'), {
+        after: response.id,
+        orderings: '[document.first_publication_date]',
+        pageSize: 1,
+      })
+    ).results[0];
+  } catch {
+    previousPost = { data: {} };
+    nextPost = { data: {} };
+  }
+  // const nextPost = await prismic.getByUID('posts', String(slug), {
+  //   after: String(slug),
+  //   orderings: '[my.posts.first_publication_date]',
+  // });
+
   return {
     props: {
       post: {
@@ -143,6 +210,18 @@ export const getStaticProps: GetStaticProps = async context => {
         uid: response.uid,
         data: response.data,
       },
+      previousPost: previousPost
+        ? {
+            slug: previousPost.uid,
+            title: previousPost.data?.title,
+          }
+        : {},
+      nextPost: nextPost
+        ? {
+            slug: nextPost.uid,
+            title: nextPost.data?.title,
+          }
+        : {},
     },
     revalidate: 60 * 60 * 24,
   };
