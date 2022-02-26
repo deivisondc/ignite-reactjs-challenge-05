@@ -15,6 +15,7 @@ import styles from './post.module.scss';
 
 interface Post {
   first_publication_date: string | null;
+  last_publication_date: string | null;
   data: {
     title: string;
     banner: {
@@ -87,6 +88,17 @@ export default function Post({ post }: PostProps) {
           <FiClock size={18} />
           <span>{estimatedTimeReading} min</span>
         </div>
+        {post.last_publication_date ? (
+          <div className={styles.editInfo}>
+            <span>
+              * editado em{' '}
+              {format(
+                new Date(post.last_publication_date),
+                "d MMM yyyy', às' HH:mm"
+              ).toLowerCase()}
+            </span>
+          </div>
+        ) : null}
         {post.data.content.map(content => (
           <div key={content.heading}>
             <h2>{content.heading}</h2>
@@ -127,6 +139,7 @@ export const getStaticProps: GetStaticProps = async context => {
     props: {
       post: {
         first_publication_date: response.first_publication_date,
+        last_publication_date: response.last_publication_date,
         uid: response.uid,
         data: response.data,
       },
